@@ -20,6 +20,7 @@ while True:
         pass
 """
 
+
 def CalculateSquareRoot(Number):
     return sqrt(Number)
 
