@@ -1,6 +1,6 @@
 from turtle import Turtle
 PADDLE_SIZE = (5, 1)
-MOVEMENT_SPEED = 10
+MOVEMENT_SPEED = 20
 
 
 class Paddle(Turtle):
@@ -14,9 +14,9 @@ class Paddle(Turtle):
         self.goto(*position)
 
     def go_down(self):
-        new_y = self.ycor() - 20
+        new_y = self.ycor() - MOVEMENT_SPEED
         self.goto(self.xcor(), new_y)
 
     def go_up(self):
-        new_y = self.ycor() + 20
+        new_y = self.ycor() + MOVEMENT_SPEED
         self.goto(self.xcor(), new_y)
