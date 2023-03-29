@@ -35,6 +35,13 @@ class Snake(Turtle):
             new_segmennt.goto(position)
             self.segments.append(new_segmennt)
     
+    def reset(self):
+        for seg in self.segments:
+            seg.goto(1000, 1000)
+        self.segments.clear()
+        self.set_snake_start()
+        self.head = self.segments[0]
+    
     def growth(self):
         # add a new segment to the shake
         self.add_segment(self.segments[-1].position())
