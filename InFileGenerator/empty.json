@@ -1,0 +1,21 @@
+{
+	"TimeStart": 0,
+	"TimeEnd": 0,
+	"CountContainers": 0,
+	"Containers": [],
+	"Cells": [
+		{"IDCont": 0, "ID": 11},
+		{"IDCont": 0, "ID": 12},
+		{"IDCont": 0, "ID": 13}
+	],
+	"Manipulator": {
+		"condition": 0,
+		"TimeEnd": 0,
+		"IDdestination": 0,
+		"IDcont": 0,
+		"PPR": 0,
+		"MotorTime": 0,
+		"FreshMotorTime": 0
+	},
+	"Operations": []
+}
