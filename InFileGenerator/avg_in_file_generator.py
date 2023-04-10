@@ -111,14 +111,14 @@ def generate():
         sliced_parms.append(operation_parameters[ind*num_params:(ind+1)*num_params])
     for ind in range(len(operation_names)):
         data['Operations'].append({'Name': operation_names[ind],
-                                   'condition': sliced_parms[ind],
-                                    'TimeInWork': sliced_parms[ind],
-                                    'CodePrior': sliced_parms[ind],
-                                    'IDcont': sliced_parms[ind],
-                                    'PPR': sliced_parms[ind],
-                                    'MotorTime': sliced_parms[ind],
-                                    'FreshMotorTime': sliced_parms[ind],
-                                    'RunTime': sliced_parms[ind]})
+                                   'condition': int(sliced_parms[ind][0]),
+                                    'TimeInWork': int(sliced_parms[ind][1]),
+                                    'CodePrior': int(sliced_parms[ind][2]),
+                                    'IDcont': int(sliced_parms[ind][3]),
+                                    'PPR': int(sliced_parms[ind][4]),
+                                    'MotorTime': int(sliced_parms[ind][5]),
+                                    'FreshMotorTime': int(sliced_parms[ind][6]),
+                                    'RunTime': int(sliced_parms[ind][7])})
 
     file_name = entry4.get() + '.json'
     with open(file_name, 'w') as f:
