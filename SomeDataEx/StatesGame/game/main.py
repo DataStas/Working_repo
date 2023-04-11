@@ -12,9 +12,6 @@ def get_mouse_click_coor(x:int, y:int) -> None:
     print(x, y)
 
 
-
-
-
 data = pd.read_csv("D:\\Pyhton_Dir\\Projects\\Working_repo\\SomeDataEx\\StatesGame\\us-states-game-start\\50_states.csv")
 guessed_states = []
 while len(guessed_states) < 50:
