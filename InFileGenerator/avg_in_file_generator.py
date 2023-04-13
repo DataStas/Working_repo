@@ -1,5 +1,6 @@
 from tkinter import *
 import json
+import pandas as pd
 
 SETTING_FOR_OPERATIONS = ["condition",
                            "TimeInWork",
@@ -32,7 +33,7 @@ LABEL_NAMES = ['Время начала моделирования',
                'Состояние ячеек склада: IDcont, IDcell',
                'Настройки манипулятора:',
                'Настройки операций участка:',
-               'Настройки усреднителя время и частота:']
+               'Имя файда для настройки усреднителя']
 
 CONTENTS = ['0 - нет контейнера',
             '1 - пустой',
@@ -47,11 +48,53 @@ CONTENTS = ['0 - нет контейнера',
             ]
 
 
+def xlsx_read(file_name, sheet_name):
+    try:
+        data = pd.read_excel(file_name, sheet_name=sheet_name)
+    except FileNotFoundError:
+        print("Файл xlsx не прочитан. Проверьте его наличие, наименование")
+    except ValueError:
+        print('Неверное название страницы у xlsx файла (только английский)')
+        return [], []
+    layers_info = {
+        "layers": [
+        ]
+    }
+    row = 2
+    while data.iloc[row, 0] != 0:
+        layers_info['layers'].append({"m_Pu": 0,
+                                      "Mass": 0,
+                                      "dencity": 0,
+                                      "V": 0,
+                                      "C_Pu": 00
+                                      })
+        layers_info["layers"][row-2]["m_Pu"] = round(data.iloc[row, 0], 3)
+        layers_info["layers"][row-2]["Mass"] = round(data.iloc[row, 1], 3)
+        layers_info["layers"][row-2]["dencity"] = round(data.iloc[row, 2], 3)
+        layers_info["layers"][row-2]["V"] = round(data.iloc[row, 3], 3)
+        layers_info["layers"][row-2]["C_Pu"] = round(data.iloc[row, 4], 3)
+        row += 1
+
+    model_params = {
+        'volume': data.columns[2],
+        'frequency': data.columns[4],
+        'constuct_k': data.columns[6],
+        'n_opt': data.iloc[0, 9],
+        'n_crit': data.iloc[0, 11],
+        'time': data.iloc[data.shape[0]-1, 8],
+    }
+
+    return layers_info, model_params
+
+
 # Button
 def generate():
     # Load the JSON data from the file
-    with open('empty.json', 'r') as f:
-        data = json.load(f)
+    try:
+        with open('empty.json', 'r') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        print("Поместите файл empty.json в директорию с проектом")
 
     fields_list = [
         "TimeStart",
@@ -70,15 +113,24 @@ def generate():
     # Update the Containers array
     containers = int(entry3.get())
     containers_info = list(text.get("1.0", END).split())
+    xlsx_file_name = entry5.get().split()[0]
+    sheet_name = entry5.get().split()[1]
+    layers_info, model_params = xlsx_read(xlsx_file_name, sheet_name)
     if len(containers_info)/2 != containers:
         print("Ввод параметров контейнеров был осуществлен неверно")
     else:
         ind = 0
         while ind < containers*2-1:
-            data[fields_list[3]].append({'content': int(containers_info[ind]),
-                                        'ID': int(containers_info[ind+1])})
-            ind += 2
-
+            try:
+                data[fields_list[3]].append({'content': int(containers_info[ind]),
+                                            'ID': int(containers_info[ind+1]),
+                                            'Volume': model_params['volume'] if int(containers_info[ind]) != 0 else 0,
+                                            'Layers': layers_info["layers"] if int(containers_info[ind]) >= 2 else []})
+                ind += 2
+            except TypeError:
+                print('При вводе произошла ошибка, файл не создан')
+                return 0
+    
     # Update the Cells array
     cells_info = list(text2.get("1.0", END).split())
     for ind in range(3):
@@ -119,21 +171,34 @@ def generate():
                                     'MotorTime': int(sliced_parms[ind][5]),
                                     'FreshMotorTime': int(sliced_parms[ind][6]),
                                     'RunTime': int(sliced_parms[ind][7])})
-
     file_name = entry4.get() + '.json'
     with open(file_name, 'w') as f:
-        print('Файл успешно создан')
         json.dump(data, f, indent=2)
+    
+    avg_params = {
+        "WorkParameters": [
+            {"WorkTime": model_params['time'],
+             "Frequncy": model_params['frequency']}],
+        'ConstructionCoef': model_params['constuct_k'],
+        'n_opt': model_params['n_opt'],
+        'n_crit': model_params['n_crit']
+    }
+    
+    file2_name = "AvgParams_" + entry4.get() + '.json'
+    with open(file2_name, 'w') as f:
+        print('Файлы успешно созданы')
+        json.dump(avg_params, f, indent=2)
 
-# Listbox
-def listbox_used(event):
-    # Gets current selection from listbox
-    print(listbox.get(listbox.curselection()))  
+
+def listbox_used():
+    pass
 
 
-with open('pre_set.json', 'r') as f:
-    pre_settrings_data = json.load(f)
-
+try:
+    with open('pre_set.json', 'r') as f:
+        pre_settrings_data = json.load(f)
+except FileNotFoundError:
+    print("Поместите в директорию файл pre_set.json")
 
 window = Tk()
 window.title("Генератор входных файлов для усреднителя")
@@ -185,7 +250,9 @@ row += 1
 # row += 1
 
 label = Label(text="")
-label.config(text="Введите имя выходного файла")
+label.config(text="Введите имя выходного файла в первую строчку" +
+             "\n" +
+             "Введите имя страницы xlsx файла во вторую строчку")
 label.grid(column=0, row=row)
 
 entry4 = Entry(width=30)
@@ -326,11 +393,11 @@ text4.insert(END, pre_setting_oper)
 text4.grid(column=2, row=row)
 row += 1
 
-# text5 = Text(height=5, width=30)
-# text5.focus()
-# text5.insert(END, "Настройки усреднителя ввод через пробел по-строчно")
-# text5.grid(column=2, row=row)
-# row += 1
+entry5 = Entry(width=30)
+# Add some text to begin with
+entry5.insert(END, string="super.xlsx OK")
+entry5.grid(column=2, row=row)
+
 
 # calls action() when pressed
 button = Button(text="Сгенерировать", command=generate)
