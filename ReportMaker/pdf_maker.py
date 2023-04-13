@@ -49,11 +49,31 @@ class PDF(FPDF):
 
     def chapter_body(self, name, image_names):
         # Read text file
-        with open(name, 'rb') as fh:
-            txt = fh.read().decode('utf-8')
+        name = "./txts/" + name 
+        try:
+            with open(name, 'rb') as fh:
+                txt = fh.read().decode('utf-8')
+        except FileNotFoundError:
+            print('Файл с текстом не найден')
         self.write(1, txt)
         self.ln(50)
-        self.image(name=image_names, x=10, y=60, h=120, w=160)
+        try:
+            for ind, image in enumerate(image_names):
+                if ind % 2 == 0:
+                    self.add_page()
+                    y = 40
+                if image[:3] == 'pie':
+                    h = 120
+                    w = 120
+                else:
+                    h = 120
+                    w = 160
+                image = './pngs/' + image
+                self.image(name=image, x=20, y=y, h=h, w=w)
+                y += 123
+
+        except FileNotFoundError:
+            print("Файл с картинкой не найден")
 
     def print_chapter(self, num, title, name, image_names):
         self.add_page()
