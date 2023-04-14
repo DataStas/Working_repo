@@ -18,21 +18,23 @@ FILES_TO_PDF = ['statuses.png',
                 'pie_quality.png',
                 'pie_risk.png',
                 'mass_plot.png']
-FONT={'family': 'serif', 'color': 'black', 'size': 24}
+FONT = {'family': 'Arial', 'color': 'black', 'size': 24}
 
 def read_data(file_name):
     try:
         with open(file_name, 'r') as file:
             data_json = json.load(file)
-            data = pd.DataFrame(data_json)
     except FileNotFoundError:
         print('Файл не найден')
         return 0
-    except ValueError:
-        print('Нельзя преобразовать в DataFrame, вернул json')
-        return data_json
     else:
-        return data
+        try:
+            data = pd.DataFrame(data_json)
+        except ValueError:
+            print('Нельзя преобразовать в DataFrame, вернул json')
+            return data_json
+        else:
+            return data
 
 
 def make_df_of_statuses(statuses):
@@ -98,11 +100,15 @@ def make_statuses_plot(start: int, stop: int, y_plot, save=False, show=False):
                  [y[ind] for y in y_plot[start_window:window]],
                  label=PLANT_NAMES[ind])
     plt.ylim(-11, 10)
-    plt.yticks([8, 5, 2, 0, -4, -7, -10])
-    plt.legend(loc='upper right')
+    plt.yticks([])
+    plt.xticks(fontsize=FONT['size'])
+    plt.legend(loc='upper right',
+               prop={'family': 'Arial', 'size': 14})
     plt.xlabel('Время, с', fontdict=FONT)
     plt.ylabel('Статус оборудования', fontdict=FONT)
     plt.ticklabel_format(useOffset=False)
+    plt.suptitle('График работы оборудования',
+                 fontsize=24)
     plt.grid()
     if show:
         plt.show()
@@ -129,14 +135,16 @@ def make_pie_risk(risk_data, save=False, show=False):
     risk_range = {key: value for key, value in risk_range.items() if value != 0}
     fig = plt.figure(figsize =(12, 8))
     plt.pie(x=risk_range.values(),
-            labels=[f'Группа риска: {ris}' for ris in risk_range.keys()],
-            labeldistance=0.25,
+            labels=[f'Группа риска: {ris}-{ris+10}' for ris in risk_range.keys()],
+            labeldistance=0.2,
             rotatelabels=True,
             autopct='%1.1f%%',
             pctdistance=1.2,
-            textprops=FONT)
+            textprops={'family': 'Arial', 'color': 'black', 'size': 14})
     plt.rcParams['axes.facecolor'] = 'white'
-    plt.legend(title='Оценки проведения процесса усреднения', font=FONT)
+    plt.legend(title='Оценки проведения процесса усреднения',
+               loc='lower left',
+               prop={'family': 'Arial', 'size': 14})
     if show:
         plt.show()
     if save:
@@ -150,13 +158,15 @@ def make_pie_quality(quality_share, save=False, show=False):
     fig = plt.figure(figsize =(12, 8))
     plt.pie(x=quality,
             labels=label,
-            labeldistance=0.25,
+            labeldistance=0.23,
             rotatelabels=True,
             autopct='%1.1f%%',
             pctdistance=1.2,
-            textprops=FONT)
+            textprops={'family': 'Arial', 'size': 14})
     plt.rcParams['axes.facecolor'] = 'white'
-    plt.legend(title='Отношение бракованной продукции к нормальной', font=FONT)
+    plt.legend(title='Отношение бракованной продукции к нормальной',
+               loc='lower left',
+               prop={'family': 'Arial', 'size': 14})
     if show:
         plt.show()
     if save:
@@ -186,20 +196,40 @@ def mass_plot(masses: list(), quality: list(), save=False, show=False):
             height=mass_plot_info,
             width=1,
             color='r',
-            label='Весь продукт',
-            font=FONT)
+            label='Весь продукт')
         plt.bar(x=x,
             height=good_mass_plot_info,
             width=1,
             color='g',
-            label='Хороший продукт',
-            font=FONT)
-    plt.xlabel('Число произведенных продуктов', fontdict=FONT)
-    plt.ylabel('Масса произведенных продуктов', fontdict=FONT)
+            label='Хороший продукт')
+    plt.xlabel('Число произведенных продуктов',
+               fontdict={'family': 'Arial', 'size': 14})
+    plt.ylabel('Масса произведенных продуктов',
+               fontdict={'family': 'Arial', 'size': 14})
+    plt.legend()
     if show:
         plt.show()
     if save:
         fig.savefig("./pngs/mass_plot.png", bbox_inches='tight')
+    return fig
+
+
+def avg_process_plot(mixing_degree, mixing_params, file_name_to_save: str, save=False, show=False):
+    fig = plt.figure(figsize=(12, 8))
+    mixing_degree = [degree[1] for degree in mixing_degree] 
+    plt.plot([n for n in range(len(mixing_degree))], mixing_degree)
+    plt.xlabel('Время, с', fontdict=FONT)
+    plt.ylabel('Степень смешения', fontdict=FONT)
+    plt.suptitle(mixing_params,
+                 fontsize=24)
+    plt.yticks(fontsize=FONT['size'])
+    plt.xticks(fontsize=FONT['size'])
+    plt.grid()
+    if show:
+        plt.show()
+    if save:
+        file_name_to_save = "./pngs/" + file_name_to_save + '.png'
+        fig.savefig(file_name_to_save, bbox_inches='tight')
     return fig
 
 
@@ -217,20 +247,37 @@ def pdf_saver(file_name, list_of_filenames_to_save):
         print("ошибка с записью. Проверьте наличие шрифтов")
     
 
-# statuses = read_data(STATUSES_FILE)
-# y_plot = make_y_plots_statuses(statuses)
-# figures_storage = []
-# statuses_plot_to_print = make_statuses_plot(1000, 1400, y_plot)
-# figures_storage.append(make_statuses_plot(1000, 1400, y_plot))
-pdf_saver('Отчёт по усреднителю', FILES_TO_PDF)
+statuses = read_data(STATUSES_FILE)
+y_plot = make_y_plots_statuses(statuses)
+figures_storage = []
+statuses_plot_to_print = make_statuses_plot(0, 3600, y_plot, save=True)
+figures_storage.append(make_statuses_plot(1000, 1400, y_plot))
 
-# products = read_data('Batches2.js')
+products = read_data('./jsons/Batches2.js')
 
-# make_pie_quality(products['Consunption']['QualityCoef'], save=True)
-# risks = exact_from_batches(products, 'RiskAssessment')
-# make_pie_risk(risks, save=True)
-# total_mass = exact_from_batches(products, 'TotalMass')
-# quality = exact_from_batches(products, 'IsGood')
-# mass_plot(total_mass, quality, save=True)
-# print(products['Consunption']['QualityCoef'])
+make_pie_quality(products['Consunption']['QualityCoef'], save=True)
+
+risks = exact_from_batches(products, 'RiskAssessment')
+make_pie_risk(risks, save=True)
+
+total_mass = exact_from_batches(products, 'TotalMass')
+quality = exact_from_batches(products, 'IsGood')
+mass_plot(total_mass, quality, save=True)
+
+avg_name = "avg_plot_"
+avg_names = []
+mixing_params = ""
+for ind, product in enumerate(products['Batches']):
+    avg_name += str(ind)
+    mixing_params += f"Частота: {product['Frequency'][0]} "
+    mixing_params += f"Коэффициент заполнения: {product['FillCoef']:.2f} "
+    mixing_params += f"Начальная степень смешения {product['StartDegreeMixing']}"
+    avg_process_plot(product['DegreeMixingGraph'], mixing_params, avg_name, save=True)
+    avg_names.append(avg_name + '.png')
+    avg_name = "avg_plot_"
+    mixing_params = ""
+
+
+
+pdf_saver('Отчёт по усреднителю', FILES_TO_PDF+avg_names)
 

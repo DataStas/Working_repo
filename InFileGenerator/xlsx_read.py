@@ -14,7 +14,7 @@ def xlsx_read(file_name):
                                       "Mass": 0,
                                       "dencity": 0,
                                       "V": 0,
-                                      "C_Pu": 00
+                                      "C_Pu": 0
                                       })
         layers_info["layers"][row-2]["m_Pu"] = round(data.iloc[row, 0], 3)
         layers_info["layers"][row-2]["Mass"] = round(data.iloc[row, 1], 3)
@@ -28,7 +28,7 @@ def xlsx_read(file_name):
         'frequency': data.columns[4],
         'constuct_k': data.columns[6],
         'n_opt': data.iloc[0, 9],
-        'n_crit': data.iloc[0, 11],
+        'к': data.iloc[0, 11],
         'time': data.iloc[data.shape[0]-1, 8],
     }
 

@@ -68,11 +68,11 @@ def xlsx_read(file_name, sheet_name):
                                       "V": 0,
                                       "C_Pu": 00
                                       })
-        layers_info["layers"][row-2]["m_Pu"] = round(data.iloc[row, 0], 3)
-        layers_info["layers"][row-2]["Mass"] = round(data.iloc[row, 1], 3)
-        layers_info["layers"][row-2]["dencity"] = round(data.iloc[row, 2], 3)
-        layers_info["layers"][row-2]["V"] = round(data.iloc[row, 3], 3)
-        layers_info["layers"][row-2]["C_Pu"] = round(data.iloc[row, 4], 3)
+        layers_info["layers"][row-2]["m_Pu"] = round(data.iloc[row, 1], 3)
+        layers_info["layers"][row-2]["Mass"] = round(data.iloc[row, 2], 3)
+        layers_info["layers"][row-2]["dencity"] = round(data.iloc[row, 3], 3)
+        layers_info["layers"][row-2]["V"] = round(data.iloc[row, 4], 3)
+        layers_info["layers"][row-2]["C_Pu"] = round(data.iloc[row, 5], 3)
         row += 1
 
     model_params = {
@@ -133,8 +133,11 @@ def generate():
     
     # Update the Cells array
     cells_info = list(text2.get("1.0", END).split())
-    for ind in range(3):
-        data[fields_list[4]][ind]['IDCont'] = int(cells_info[ind])
+    cell_num = 0
+    for ind in range(0, 6, 2):
+        data[fields_list[4]][cell_num]['IDCont'] = int(cells_info[ind])
+        data[fields_list[4]][cell_num]['IDCont'] = int(cells_info[ind+1])
+        cell_num += 1
 
     # Update the Manipulator object
     manip_info = list(text3.get("1.0", END).split())
@@ -166,7 +169,7 @@ def generate():
                                    'condition': int(sliced_parms[ind][0]),
                                     'TimeInWork': int(sliced_parms[ind][1]),
                                     'CodePrior': int(sliced_parms[ind][2]),
-                                    'IDcont': int(sliced_parms[ind][3]),
+                                    'IDCont': int(sliced_parms[ind][3]),
                                     'PPR': int(sliced_parms[ind][4]),
                                     'MotorTime': int(sliced_parms[ind][5]),
                                     'FreshMotorTime': int(sliced_parms[ind][6]),

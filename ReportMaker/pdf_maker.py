@@ -47,33 +47,72 @@ class PDF(FPDF):
         # Line break
         self.ln(4)
 
-    def chapter_body(self, name, image_names):
-        # Read text file
-        name = "./txts/" + name 
+    def print_text_from_txt(self, name):
         try:
             with open(name, 'rb') as fh:
                 txt = fh.read().decode('utf-8')
         except FileNotFoundError:
             print('Файл с текстом не найден')
-        self.write(1, txt)
-        self.ln(50)
+        self.write(10, txt)
+        self.add_page()
+
+    def print_images(self, image_names):
+        avg_names = [avg_name for avg_name in image_names if avg_name[:3] == 'avg'] 
+        image_names = [name for name in image_names if name[:3] != 'avg']
+
         try:
-            for ind, image in enumerate(image_names):
-                if ind % 2 == 0:
-                    self.add_page()
-                    y = 40
+            for image in image_names:
+                image = './pngs/' + image
                 if image[:3] == 'pie':
                     h = 120
                     w = 120
+                    self.image(name=image, x=20, y=20, h=h, w=w)
+                elif image[:3] == 'avg':
+                    pass
                 else:
                     h = 120
                     w = 160
-                image = './pngs/' + image
-                self.image(name=image, x=20, y=y, h=h, w=w)
-                y += 123
-
+                    self.image(name=image, x=20, y=20, h=h, w=w)
+                self.add_page()
         except FileNotFoundError:
             print("Файл с картинкой не найден")
+
+        h = 80
+        w = 120
+        ind = 0
+        if len(avg_names) > 0:
+            while ind <= len(avg_names):
+                try:
+                    image = './pngs/' + avg_names[ind]
+                except IndexError:
+                    image = './pngs/' + avg_names[ind-1]
+                    image_2 = image
+                else:
+                    try:
+                        image_2 = './pngs/' + avg_names[ind+1]
+                    except IndexError:
+                        image_2 = image
+                try:
+                    self.image(name=image, x=10, y=30, h=h, w=w)
+                    self.image(name=image_2, x=10, y=130, h=h, w=w)
+                except FileNotFoundError:
+                    print("Файлы по усреднителю не найдены")
+                self.add_page()
+                ind += 2
+        else:
+            print("По усреднителю нет файлов!")
+                
+
+    
+    
+    def chapter_body(self, name, image_names):
+        # Read text file
+        name = "./txts/" + name
+        self.print_text_from_txt(name)
+        self.print_images(image_names)
+                
+
+
 
     def print_chapter(self, num, title, name, image_names):
         self.add_page()
