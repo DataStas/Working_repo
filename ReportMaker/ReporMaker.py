@@ -6,7 +6,9 @@ import random
 import seaborn as sns
 from pdf_maker import PDF
 
-STATUSES_FILE = './jsons/statuses.js'
+STATUSES_FILE = './jsons/Statuses_init_good.js'
+BATCHES_FILE = './jsons/Batches_init_good.js'
+REPORT_NAME = 'Отчёт по усреднителю хороший'
 PLANT_NAMES = ['Manipulator',
                'Granulating',
                'Press',
@@ -17,8 +19,10 @@ PLANT_NAMES = ['Manipulator',
 FILES_TO_PDF = ['statuses.png',
                 'pie_quality.png',
                 'pie_risk.png',
-                'mass_plot.png']
+                'mass_plot.png',
+                'dencity_plot.png']
 FONT = {'family': 'Arial', 'color': 'black', 'size': 24}
+
 
 def read_data(file_name):
     try:
@@ -79,13 +83,13 @@ def make_y_plots_statuses(in_file):
     # введение смещений для посмтроения графика
     # [n for n in range(-10,10,3)]
     for state in states:
-        state[0] -= 10
-        state[1] += 5
-        state[2] += 8
+        state[0] -= 14
+        state[1] += 6
+        state[2] += 10
         state[3] += 2
-        state[4] -= 1
-        state[5] -= 4
-        state[6] -= 7
+        state[4] -= 2
+        state[5] -= 6
+        state[6] -= 10
     return states
 
 
@@ -99,7 +103,7 @@ def make_statuses_plot(start: int, stop: int, y_plot, save=False, show=False):
         plt.plot(x,
                  [y[ind] for y in y_plot[start_window:window]],
                  label=PLANT_NAMES[ind])
-    plt.ylim(-11, 10)
+    plt.ylim(-15, 14)
     plt.yticks([])
     plt.xticks(fontsize=FONT['size'])
     plt.legend(loc='upper right',
@@ -145,6 +149,8 @@ def make_pie_risk(risk_data, save=False, show=False):
     plt.legend(title='Оценки проведения процесса усреднения',
                loc='lower left',
                prop={'family': 'Arial', 'size': 14})
+    plt.suptitle('Диаграмма оценки рисков',
+                 fontsize=24)
     if show:
         plt.show()
     if save:
@@ -167,6 +173,8 @@ def make_pie_quality(quality_share, save=False, show=False):
     plt.legend(title='Отношение бракованной продукции к нормальной',
                loc='lower left',
                prop={'family': 'Arial', 'size': 14})
+    plt.suptitle('Диаграмма распределения бракованного и хорошего продукта',
+                 fontsize=24)
     if show:
         plt.show()
     if save:
@@ -190,23 +198,39 @@ def mass_plot(masses: list(), quality: list(), save=False, show=False):
             else:
                 good_mass_plot_info.append(cumulative)
 
-        fig = plt.figure(figsize =(12, 8))
-        x = [n for n in range(len(mass_plot_info))]
-        plt.bar(x=x,
+    fig = plt.figure(figsize =(12, 8))
+    x = [n for n in range(len(mass_plot_info))]
+    p = plt.bar(x=x,
             height=mass_plot_info,
             width=1,
-            color='r',
+            color='#FF7F50',
             label='Весь продукт')
-        plt.bar(x=x,
+    plt.bar(x=x,
             height=good_mass_plot_info,
             width=1,
-            color='g',
+            color='#9ACD32',
             label='Хороший продукт')
+    plt.hlines(y=mass_plot_info[-1],
+               xmin=0,
+               xmax=len(mass_plot_info),
+               colors='red',
+               linestyles='dashed',
+               label=f'Масса произведенного продукта {mass_plot_info[-1]}',
+               linewidths=3)
+    plt.hlines(y=good_mass_plot_info[-1],
+               xmin=0,
+               xmax=len(mass_plot_info),
+               colors='green',
+               linestyles='dashed',
+               label=f'Масса произведенного хорошего продукта {good_mass_plot_info[-1]}',
+               linewidths=3)
     plt.xlabel('Число произведенных продуктов',
-               fontdict={'family': 'Arial', 'size': 14})
+               fontdict=FONT)
     plt.ylabel('Масса произведенных продуктов',
-               fontdict={'family': 'Arial', 'size': 14})
+               fontdict=FONT)
     plt.legend()
+    plt.suptitle('График прироста масс продуктов',
+                 fontsize=24)
     if show:
         plt.show()
     if save:
@@ -225,6 +249,32 @@ def avg_process_plot(mixing_degree, mixing_params, file_name_to_save: str, save=
     plt.yticks(fontsize=FONT['size'])
     plt.xticks(fontsize=FONT['size'])
     plt.grid()
+    plt.suptitle('График описыпающий работу установки усреднения',
+                 fontsize=24)
+    if show:
+        plt.show()
+    if save:
+        file_name_to_save = "./pngs/" + file_name_to_save + '.png'
+        fig.savefig(file_name_to_save, bbox_inches='tight')
+    return fig
+
+
+def density_plot(data_to_plot, reg_top=5.2, reg_bot=4.8, file_name_to_save='dencity_plot', save=False, show=False):
+    fig = plt.figure(figsize=(12, 8))
+    p = plt.hist(data_to_plot,
+                 color='#E69F00',
+                 label='Плотности таблеток')
+    plt.vlines(x=[reg_top, reg_bot],
+               ymin=0,
+               ymax=p[0].max(),
+               colors='black',
+               linewidths=5,
+               label='Рекомендуемые границы')
+    plt.legend()
+    plt.xlabel('Плотность', fontdict=FONT)
+    plt.ylabel('Количество таблеток', fontdict=FONT)
+    plt.suptitle('График для анализа отклонений от регламента',
+                 fontsize=24)
     if show:
         plt.show()
     if save:
@@ -247,23 +297,23 @@ def pdf_saver(file_name, list_of_filenames_to_save):
         print("ошибка с записью. Проверьте наличие шрифтов")
     
 
+# for STATUSES_FILE, BATCHES_FILE in INPUT_INFO:
 statuses = read_data(STATUSES_FILE)
 y_plot = make_y_plots_statuses(statuses)
-figures_storage = []
-statuses_plot_to_print = make_statuses_plot(0, 3600, y_plot, save=True)
-figures_storage.append(make_statuses_plot(1000, 1400, y_plot))
+# figures_storage = []
+statuses_plot_to_print = make_statuses_plot(0, len(y_plot), y_plot, save=True, show=False)
+# figures_storage.append(make_statuses_plot(1000, 1400, y_plot))
 
-products = read_data('./jsons/Batches2.js')
+products = read_data(BATCHES_FILE)
 
-make_pie_quality(products['Consunption']['QualityCoef'], save=True)
+make_pie_quality(products['Consunption']['QualityCoef'], save=True, show=False)
 
 risks = exact_from_batches(products, 'RiskAssessment')
-make_pie_risk(risks, save=True)
+make_pie_risk(risks, save=True, show=False)
 
 total_mass = exact_from_batches(products, 'TotalMass')
 quality = exact_from_batches(products, 'IsGood')
-mass_plot(total_mass, quality, save=True)
-
+mass_plot(total_mass, quality, save=True, show=False)
 avg_name = "avg_plot_"
 avg_names = []
 mixing_params = ""
@@ -277,7 +327,13 @@ for ind, product in enumerate(products['Batches']):
     avg_name = "avg_plot_"
     mixing_params = ""
 
+dencities = exact_from_batches(products, 'Dencity')
+synthesized_data = np.array([random.gauss(mu=5.8, sigma=0.2) for _ in range(100)])
+# density_plot(synthesized_data,
+#              reg_bot=5.6,
+#              reg_top=6,
+#              save=True)
 
 
-pdf_saver('Отчёт по усреднителю', FILES_TO_PDF+avg_names)
+pdf_saver(REPORT_NAME, FILES_TO_PDF+avg_names)
 

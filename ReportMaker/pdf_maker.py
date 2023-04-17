@@ -75,10 +75,9 @@ class PDF(FPDF):
                     self.image(name=image, x=20, y=20, h=h, w=w)
                 self.add_page()
         except FileNotFoundError:
-            print("Файл с картинкой не найден")
-
-        h = 80
-        w = 120
+            print("Файл с картинкой {image} не найден")
+        h = 100
+        w = 140
         ind = 0
         if len(avg_names) > 0:
             while ind <= len(avg_names):
