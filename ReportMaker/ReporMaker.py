@@ -9,18 +9,20 @@ from pdf_maker import PDF
 STATUSES_FILE = './jsons/Statuses_init_good.js'
 BATCHES_FILE = './jsons/Batches_init_good.js'
 REPORT_NAME = 'Отчёт по усреднителю хороший'
-PLANT_NAMES = ['Manipulator',
-               'Granulating',
-               'Press',
-               'Averaging',
-               'Lab',
-               'Probe',
-               'AddStZn']
+PLANT_NAMES = ['Манипулятор',
+               'Установка гранулирования',
+               'Установка прессования',
+               'Установка усреднения',
+               'Лаборатория',
+               'Установка пробоотбора',
+               'Установка добавления стеарата цинка']
 FILES_TO_PDF = ['statuses.png',
                 'pie_quality.png',
                 'pie_risk.png',
                 'mass_plot.png',
-                'dencity_plot.png']
+                'Frequency.png',
+                'time.png',
+                'm.png']
 FONT = {'family': 'Arial', 'color': 'black', 'size': 24}
 
 
@@ -61,15 +63,6 @@ def make_df_of_statuses(statuses):
     # # lab_y = status_state[PLANT_NAMES[4]] 
     # # probe_y = status_state[PLANT_NAMES[5]] - 1
     # # add_st_y = status_state[PLANT_NAMES[6]] - 2 
-
-    # y_plot.append(status_state[PLANT_NAMES[0]] - 10)
-    # y_plot.append(status_state[PLANT_NAMES[1]] + 5)
-    # y_plot.append(status_state[PLANT_NAMES[2]] + 8)
-    # y_plot.append(status_state[PLANT_NAMES[3]] + 2)
-    # y_plot.append(status_state[PLANT_NAMES[4]] - 1)
-    # y_plot.append(status_state[PLANT_NAMES[5]] - 4)
-    # y_plot.append(status_state[PLANT_NAMES[6]] - 7)
-
     return status_state
 
 
@@ -106,10 +99,12 @@ def make_statuses_plot(start: int, stop: int, y_plot, save=False, show=False):
     plt.ylim(-15, 14)
     plt.yticks([])
     plt.xticks(fontsize=FONT['size'])
-    plt.legend(loc='upper right',
-               prop={'family': 'Arial', 'size': 14})
+    plt.legend(loc='lower center',
+               prop={'family': 'Arial', 'size': 16},
+               bbox_to_anchor=(0.5, -0.5),
+               borderaxespad=0)
     plt.xlabel('Время, с', fontdict=FONT)
-    plt.ylabel('Статус оборудования', fontdict=FONT)
+    plt.ylabel('Статус работы оборудования', fontdict=FONT)
     plt.ticklabel_format(useOffset=False)
     plt.suptitle('График работы оборудования',
                  fontsize=24)
@@ -119,7 +114,7 @@ def make_statuses_plot(start: int, stop: int, y_plot, save=False, show=False):
     if save:
         fig.savefig("./pngs/statuses.png", bbox_inches='tight')
     return fig
-    
+
 
 def exact_from_batches(in_file, res_name):
     total_res = []
@@ -170,10 +165,10 @@ def make_pie_quality(quality_share, save=False, show=False):
             pctdistance=1.2,
             textprops={'family': 'Arial', 'size': 14})
     plt.rcParams['axes.facecolor'] = 'white'
-    plt.legend(title='Отношение бракованной продукции к нормальной',
+    plt.legend(title='Отношение бракованной продукции к допустимой',
                loc='lower left',
                prop={'family': 'Arial', 'size': 14})
-    plt.suptitle('Диаграмма распределения бракованного и хорошего продукта',
+    plt.suptitle('Диаграмма качества',
                  fontsize=24)
     if show:
         plt.show()
@@ -215,20 +210,20 @@ def mass_plot(masses: list(), quality: list(), save=False, show=False):
                xmax=len(mass_plot_info),
                colors='red',
                linestyles='dashed',
-               label=f'Масса произведенного продукта {mass_plot_info[-1]}',
+               label=f'Количество произведенного продукта {mass_plot_info[-1]:.2f}',
                linewidths=3)
     plt.hlines(y=good_mass_plot_info[-1],
                xmin=0,
                xmax=len(mass_plot_info),
                colors='green',
                linestyles='dashed',
-               label=f'Масса произведенного хорошего продукта {good_mass_plot_info[-1]}',
+               label=f'Масса произведенного хорошего продукта {good_mass_plot_info[-1]:.2f}',
                linewidths=3)
-    plt.xlabel('Число произведенных продуктов',
+    plt.xlabel('Количество произведенных продуктов',
                fontdict=FONT)
     plt.ylabel('Масса произведенных продуктов',
                fontdict=FONT)
-    plt.legend()
+    plt.legend(prop={'family': 'Arial', 'size': 16}) # , bbox_to_anchor=(0, -0.01)
     plt.suptitle('График прироста масс продуктов',
                  fontsize=24)
     if show:
@@ -241,16 +236,17 @@ def mass_plot(masses: list(), quality: list(), save=False, show=False):
 def avg_process_plot(mixing_degree, mixing_params, file_name_to_save: str, save=False, show=False):
     fig = plt.figure(figsize=(12, 8))
     mixing_degree = [degree[1] for degree in mixing_degree] 
-    plt.plot([n for n in range(len(mixing_degree))], mixing_degree)
+    plt.plot([n for n in range(len(mixing_degree))],
+             mixing_degree,
+             label=mixing_params)
     plt.xlabel('Время, с', fontdict=FONT)
     plt.ylabel('Степень смешения', fontdict=FONT)
-    plt.suptitle(mixing_params,
+    plt.suptitle('График описывающий работу установки усреднения',
                  fontsize=24)
     plt.yticks(fontsize=FONT['size'])
     plt.xticks(fontsize=FONT['size'])
     plt.grid()
-    plt.suptitle('График описыпающий работу установки усреднения',
-                 fontsize=24)
+    plt.legend(prop={'family': 'Arial', 'size': 18})
     if show:
         plt.show()
     if save:
@@ -259,20 +255,42 @@ def avg_process_plot(mixing_degree, mixing_params, file_name_to_save: str, save=
     return fig
 
 
-def density_plot(data_to_plot, reg_top=5.2, reg_bot=4.8, file_name_to_save='dencity_plot', save=False, show=False):
+def density_plot(data_to_plot, file_name_to_save='dencity_plot', save=False, show=False, **options):
+    """_summary_
+
+    Kwargs:
+        **options: набор параметров необходимых для корректной отрисовки:
+        reg_top - верхняя рекомендуемая граница
+        reg_bot - нижняя рекомендуемая граница
+        x_label - наименование оси X
+        y_label - наименование оси Y"
+    Returns:
+        _type_: _description_
+    """
     fig = plt.figure(figsize=(12, 8))
-    p = plt.hist(data_to_plot,
-                 color='#E69F00',
-                 label='Плотности таблеток')
-    plt.vlines(x=[reg_top, reg_bot],
-               ymin=0,
-               ymax=p[0].max(),
-               colors='black',
-               linewidths=5,
-               label='Рекомендуемые границы')
-    plt.legend()
-    plt.xlabel('Плотность', fontdict=FONT)
-    plt.ylabel('Количество таблеток', fontdict=FONT)
+    try:
+        p = plt.hist(data_to_plot,
+                     color='#E69F00',
+                     label=options['x_label'])
+    except KeyError:
+        print('Вы забыли указать наименование оси X')
+        return 0
+    try:
+        plt.vlines(x=[options['reg_top'], options['reg_bot']],
+                   ymin=0,
+                   ymax=p[0].max(),
+                   colors='black',
+                   linewidths=5,
+                   label='Регламентные границы')
+    except KeyError:
+        print("Вы забыли указать reg_top или reg_bot")
+        return 0
+    plt.legend(prop={'family': 'Arial', 'size': 16})
+    plt.xlabel(options['x_label'], fontdict=FONT)
+    try:
+        plt.ylabel(options['y_label'], fontdict=FONT)
+    except KeyError:
+        print("Вы забыли указать наименование оси Y")
     plt.suptitle('График для анализа отклонений от регламента',
                  fontsize=24)
     if show:
@@ -284,8 +302,8 @@ def density_plot(data_to_plot, reg_top=5.2, reg_bot=4.8, file_name_to_save='denc
 
 
 def pdf_saver(file_name, list_of_filenames_to_save):
-    pdf = PDF(file_name)
-    # pdf.set_title('Заголовок')
+    pdf = PDF('Отчёт о результатах экспериментального исследования участка усреднения')
+    # pdf.set_title('')
     pdf.print_chapter(1,
                       'Графики по статусам',
                       'exp_info.txt',
@@ -293,9 +311,29 @@ def pdf_saver(file_name, list_of_filenames_to_save):
     try:
         file_name = './pdfs/' + file_name + '.pdf'
         pdf.output(file_name, 'F')
+        print("Отчёт создан")
     except FileNotFoundError:
         print("ошибка с записью. Проверьте наличие шрифтов")
-    
+
+
+def make_fake_data():
+    synthesized_data = []
+    synthesized_m = np.array([random.gauss(mu=0.95, sigma=0.05) for _ in range(1000)])
+    synthesized_m = [data for data in synthesized_m if data < 1]
+    synthesized_data.append(synthesized_m)
+
+    synthesized_f = np.array([random.gauss(mu=50, sigma=10) for _ in range(1000)])
+    synthesized_data.append(synthesized_f)
+
+    synthesized_t = np.array([random.gauss(mu=500, sigma=100) for _ in range(1000)])
+    synthesized_data.append(synthesized_t)
+    x_labels = ['Степень смешения', 'Частота смешения', 'Время смешения']
+    boundaries = [(0.9, 0.9), (60, 45), (540, 460)]
+    file_names = ['m', 'Frequency', 'time']
+
+    drow_info = zip(synthesized_data, x_labels, file_names, boundaries)
+    return drow_info
+
 
 # for STATUSES_FILE, BATCHES_FILE in INPUT_INFO:
 statuses = read_data(STATUSES_FILE)
@@ -319,21 +357,27 @@ avg_names = []
 mixing_params = ""
 for ind, product in enumerate(products['Batches']):
     avg_name += str(ind)
-    mixing_params += f"Частота: {product['Frequency'][0]} "
-    mixing_params += f"Коэффициент заполнения: {product['FillCoef']:.2f} "
-    mixing_params += f"Начальная степень смешения {product['StartDegreeMixing']}"
-    avg_process_plot(product['DegreeMixingGraph'], mixing_params, avg_name, save=True)
+    mixing_params += f"Частота: {product['Frequency'][0]:.2f} "
+    mixing_params += f"К. заполн.: {product['FillCoef']:.2f} "
+    mixing_params += f"Нач. М {product['StartDegreeMixing']:.2f}"
+    avg_process_plot(product['DegreeMixingGraph'],
+                     mixing_params,
+                     avg_name,
+                     save=True)
     avg_names.append(avg_name + '.png')
     avg_name = "avg_plot_"
     mixing_params = ""
 
 dencities = exact_from_batches(products, 'Dencity')
-synthesized_data = np.array([random.gauss(mu=5.8, sigma=0.2) for _ in range(100)])
-# density_plot(synthesized_data,
-#              reg_bot=5.6,
-#              reg_top=6,
-#              save=True)
 
+# for data, label, file_name, bound in make_fake_data():
+#     density_plot(data,
+#                  file_name_to_save=file_name,
+#                  save=True,
+#                  reg_top=bound[0],
+#                  reg_bot=bound[1],
+#                  x_label=label,
+#                  y_label='Количество произведённых продуктов')
 
 pdf_saver(REPORT_NAME, FILES_TO_PDF+avg_names)
 

@@ -16,11 +16,11 @@ class PDF(FPDF):
         w = self.get_string_width(self.title_header) + 6
         self.set_x((210 - w) / 2)
         # Colors of frame, background and text
-        self.set_draw_color(0, 80, 180)
-        self.set_fill_color(230, 230, 0)
-        self.set_text_color(220, 50, 50)
+        # self.set_draw_color(0, 80, 180)
+        self.set_fill_color(255, 255, 255)
+        # self.set_text_color(220, 50, 50)
         # Thickness of frame (1 mm)
-        self.set_line_width(1)
+        # self.set_line_width(1)
         # Title
         self.cell(w, 9, self.title_header, 1, 1, 'С', 1)
         # Line break
@@ -54,21 +54,27 @@ class PDF(FPDF):
         except FileNotFoundError:
             print('Файл с текстом не найден')
         self.write(10, txt)
-        self.add_page()
 
     def print_images(self, image_names):
         avg_names = [avg_name for avg_name in image_names if avg_name[:3] == 'avg'] 
         image_names = [name for name in image_names if name[:3] != 'avg']
-
         try:
             for image in image_names:
                 image = './pngs/' + image
-                if image[:3] == 'pie':
+                if image[7:10] == 'pie':
                     h = 120
                     w = 120
                     self.image(name=image, x=20, y=20, h=h, w=w)
-                elif image[:3] == 'avg':
+                    self.ln(130)
+                    self.print_text_from_txt("./txts/quality_info.txt")
+                elif image[7:10] == 'avg':
                     pass
+                elif image[7:10] == 'sta':
+                    h = 98*1.7
+                    w = 102*1.7
+                    self.image(name=image, x=20, y=20, h=h, w=w)
+                    self.ln(170)
+                    self.print_text_from_txt("./txts/status_info.txt")
                 else:
                     h = 120
                     w = 160
@@ -108,6 +114,7 @@ class PDF(FPDF):
         # Read text file
         name = "./txts/" + name
         self.print_text_from_txt(name)
+        self.add_page()
         self.print_images(image_names)
                 
 
