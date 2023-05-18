@@ -1,2 +1,3 @@
 # Working_repo
- repo for python and ds etc.
+My current working repo for self-education.
+There are some python and ds projects.
