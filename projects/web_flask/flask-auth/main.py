@@ -38,8 +38,7 @@ def home():
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-
-        if User.query.filter_by(email=request.form.get('email')).first():
+        if db.session.query(User).filter_by(email=request.form.get('email')).first():
             #User already exists
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
@@ -69,15 +68,15 @@ def login():
         password = request.form.get('password')
 
         user = User.query.filter_by(email=email).first()
-        #Email doesn't exist
+        # Email doesn't exist
         if not user:
             flash("That email does not exist, please try again.")
             return redirect(url_for('login'))
-        #Password incorrect
+        # Password incorrect
         elif not check_password_hash(user.password, password):
             flash('Password incorrect, please try again.')
             return redirect(url_for('login'))
-        #Email exists and password correct
+        # Email exists and password correct
         else:
             login_user(user)
             return redirect(url_for('secrets'))
@@ -101,7 +100,8 @@ def logout():
 @app.route('/download')
 @login_required
 def download():
-    return send_from_directory('static',filename="files/cheat_sheet.pdf")
+    return send_from_directory(directory="static",
+                               path='files/cheat_sheet.pdf')
 
 
 if __name__ == "__main__":
