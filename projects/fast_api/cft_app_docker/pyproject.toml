@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "cft-app"
+version = "0.1.0"
+description = "Test task for courses"
+authors = ["DataStas <sizovstanislav10@gmail.com>"]
+readme = "README.md"
+packages = [{include = "cft_app"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+datetime = "^5.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

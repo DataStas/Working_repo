@@ -4,15 +4,10 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from database import SessionLocal
-from passlib.context import CryptContext
-try:
-    os.getcwd('/code')
-except:
-    print("On win")
-    pass
-import schemas
-import crud
+from .database import *
+from passlib.context import *
+from .schemas import *
+from .crud import *
 
 # Dependency
 def get_db():
@@ -40,7 +35,7 @@ def get_password_hash(password):
 
 
 def get_user(user_name: str, db: Session):
-    return crud.get_user_by_name(db, user_name)
+    return get_user_by_name(db, user_name)
 
 
 def authenticate_user(user_name: str,
@@ -77,7 +72,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = schemas.TokenData(username=username)
+        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
     user = get_user(user_name=token_data.username, db=db)
@@ -87,14 +82,14 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
 
 
 async def get_current_active_user(
-    current_user: Annotated[schemas.User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 async def get_current_super_user(
-    current_user: Annotated[schemas.User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     if current_user.boss:
         raise HTTPException(status_code=400, detail="Don't have a permission")

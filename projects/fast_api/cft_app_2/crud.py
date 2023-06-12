@@ -4,6 +4,11 @@ CRUD comes from: Create, Read, Update, and Delete."""
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+try:
+    os.getcwd('/code')
+except:
+    print("On win")
+    pass
 import models, schemas, auth
 
 
