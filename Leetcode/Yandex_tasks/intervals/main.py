@@ -1,30 +1,38 @@
 import random
+from typing import Tuple
 
 
-def sum_of_polinoms(k1: int, first: list, k2: int, second: list) -> str:
-    first = int(str(first).replace(',', '')[1:-1].replace(' ', ''))
-    second = int(str(second).replace(',', '')[1:-1].replace(' ', ''))
-    ans = first+second
-    ans = [int(x) for x in str(ans)]
-    return f'{len(ans)-1}\n' + str(ans).replace(',', '')[1:-1]
+def intersec(intervals: list) -> int:
+    points = []
+    for interval in intervals:
+        points.append(list(range(interval[0], interval[1]+1)))
+    count = 0
+    print(intervals, points)
+    for point_set in points:
+        for point in point_set:
+            points_copy = points.copy()
+            points_copy.remove(point_set)
+            if point_set not in points_copy:
+                count += 1
+    return count
 
 
-
-
-def test(k1, k2):
-    c1 = [random.randint(1, 9) for _ in range(k1+1)]
-    c2 = [random.randint(1, 9) for _ in range(k2+1)]
-    return k1, c1, k2, c2
-
+def test(num, bounds: list[int]):
+    intervals = []
+    for _ in range(num):
+        c1 = [random.randint(bounds[0], bounds[1]) for _ in range(2)]
+        if c1[0] > c1[1]:
+            c1[0], c1[1] = c1[1], c1[0]
+        intervals.append(tuple(c1))
+    print(intervals)
+    return intervals
 
 
 if __name__ == '__main__':
-    # k1 = int(input())
-    # c1 = [*map(int, input().split())]
-    # k2 = int(input())
-    # c2 = [*map(int, input().split())]
-    test_1 = test(1, 9)
-    print(test_1)
-    print(sum_of_polinoms(*test_1))
-    # with open('output.txt', 'w') as f:
-    #     f.write(sum_of_polinoms(*test_1))
+    num = int(input())
+    intervals = []
+    for _ in range(num):
+        intervals.append(tuple(map(int, input().split())))
+    print(intersec(intervals))
+    # for _ in range(100):
+    #     print(intersec(test(3, (1, 5, 10))))
