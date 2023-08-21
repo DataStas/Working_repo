@@ -2,18 +2,14 @@ import random
 from typing import Tuple
 
 
-def intersec(intervals: list) -> int:
-    points = []
-    for interval in intervals:
-        points.append(list(range(interval[0], interval[1]+1)))
+def intersec(inter: list) -> int:
+    inter.sort(key=lambda x: x[1])  # Сортируем интервалы по правому концу
     count = 0
-    print(intervals, points)
-    for point_set in points:
-        for point in point_set:
-            points_copy = points.copy()
-            points_copy.remove(point_set)
-            if point_set not in points_copy:
-                count += 1
+    end = float('-inf')  # Инициализируем переменную для хранения конца предыдущего интервала
+    for interval in inter:
+        if interval[0] > end:  # Если начало текущего интервала больше конца предыдущего
+            count += 1
+            end = interval[1]  # Обновляем конец предыдущего интервала
     return count
 
 
