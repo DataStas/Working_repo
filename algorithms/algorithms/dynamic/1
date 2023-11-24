@@ -1,0 +1,246 @@
+stages:
+  - smoke_test
+  - regress_test
+  - smoke_test_beta
+  - regress_test_preprod_shedule
+  - smoke_test_dynamic
+
+variables:
+  ALLURE_LAUNCH_NAME: "${CI_PROJECT_NAME} - ${CI_COMMIT_SHORT_SHA}"
+  ALLURE_LAUNCH_TAGS: "${CI_COMMIT_REF_NAME}"
+  ALLURE_TESTPLAN_PATH: "./testplan.json"
+  ALLURE_RESULTS: "./allure-results"
+  TESTS_ENDPOINT: "https://pytest.never.never.never.give.up"
+  TESTS_BRANCH: ${CI_COMMIT_REF_NAME}
+  CI_DEBUG_SERVICES: "true"
+
+services:
+  - name: selenium/standalone-chrome
+    variables:
+      SE_NODE_SESSION_TIMEOUT: 700
+
+
+smoke_test:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $STAND_TO_TEST == "dev"
+      when: never
+    - when: on_success
+  image: python:3.11
+  stage: smoke_test
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - |-
+      if [[ $CI_PIPELINE_SOURCE == "api" ]]; then
+        ./allurectl watch -- pytest -s --ci --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+      else
+        ./allurectl watch -- pytest -s -m "smoke" --ci --stand="${STAND_TO_TEST:-prod}" --headless --alluredir=${ALLURE_RESULTS}
+      fi
+    - echo ${ALLURE_USER_USED}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+#  retry:
+#    max: 2
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+
+regress_test:
+  only:
+    refs:
+      - schedules
+    variables:
+      - $SCHEDULE_TYPE == "build_regress"
+  allow_failure: false
+  image: python:3.11
+  stage: regress_test
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - STAND_TO_TEST="${STAND_TO_TEST:-prod}"
+    - ./allurectl watch -- pytest -s -m "regress" --ci --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+    - echo ${ALLURE_USER_USED}
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+
+smoke_test_beta:
+  when: manual
+  image: python
+  stage: smoke_test
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - |-
+      if [[ $CI_PIPELINE_SOURCE == "api" ]]; then
+        ./allurectl watch -- pytest -s --ci --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+      else
+        ./allurectl watch -- pytest -s -m "smoke" --ci --stand="${STAND_TO_TEST:-beta}" --headless --alluredir=${ALLURE_RESULTS}
+      fi
+    - echo ${ALLURE_USER_USED}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+
+regress_test_preprod_101_shedule:
+  only:
+    refs:
+      - schedules
+    variables:
+      - $SCHEDULE_TYPE == "build_101"
+  image: python
+  stage: regress_test_preprod_shedule
+  needs: []
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - STAND_TO_TEST="${STAND_TO_TEST:-prod_like_preprod}"
+    - ./allurectl watch -- pytest -s -m "regress" --ci --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+    - echo ${ALLURE_USER_USED}
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+
+smoke_test_preprod_101:
+  when: manual
+  image: joyzoursky/python-chromedriver
+  stage: smoke_test
+  needs: []
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - STAND_TO_TEST="${STAND_TO_TEST:-101}"
+    - ./allurectl watch -- pytest -s -m "smoke" --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+    - echo ${ALLURE_USER_USED}
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+regress_test_preprod_101:
+  when: manual
+  image: joyzoursky/python-chromedriver
+  stage: regress_test
+  needs: []
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - STAND_TO_TEST="${STAND_TO_TEST:-101}"
+    - ./allurectl watch -- pytest -s -m "regress" --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+    - echo ${ALLURE_USER_USED}
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
+
+smoke_test_dynamic:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $STAND_TO_TEST == "dev"
+  image: joyzoursky/python-chromedriver
+  stage: smoke_test_dynamic
+  before_script:
+    - pip install -r requirements.txt
+    - wget https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_386 -O ./allurectl
+    - chmod +x ./allurectl
+    - pip install pytest allure-pytest
+  script:
+    - STAND_TO_TEST="${STAND_TO_TEST:-dev}"
+    - ./allurectl watch -- pytest -s -m "smoke" --ci --stand=${STAND_TO_TEST} --headless --alluredir=${ALLURE_RESULTS}
+    - echo ${ALLURE_USER_USED}
+    - ./allurectl job-run plan --output-file ${ALLURE_TESTPLAN_PATH}
+    - if test -f ${ALLURE_TESTPLAN_PATH}; then cat ${ALLURE_TESTPLAN_PATH}; fi
+    - echo "==================="
+    - ls -la ${ALLURE_RESULTS}
+    - printenv | grep ALLURE_
+  # retry:
+  #   max: 2
+  after_script:
+    - ./allurectl job-run stop
+    - >
+      if [ $CI_JOB_STATUS == 'success' ]; then
+        echo 'This will only run on success'
+      else
+        curl -X POST $TELEGRAMM_CHAT"text=Project:+$CI_PROJECT_NAME+$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch:+$CI_COMMIT_REF_SLUG - has FAILED!"
+        curl -G $URL_VK_TEAMS$TOKEN_QA_BOT --data-urlencode "text=Project: $CI_PROJECT_NAME $CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID/ Branch: $CI_COMMIT_REF_SLUG - has FAILED!"
+      fi
