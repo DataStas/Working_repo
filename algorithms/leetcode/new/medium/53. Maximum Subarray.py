@@ -20,17 +20,18 @@ from math import inf
 #     return dp[0][-1]
 
 # divide and Conquer делим массив на подмассивы и ищем максимальный в лоб. Делим относительно среднего!
-# def maxSubArray(nums):
-#     def max_arr(A, L, R):
-#         if L > R: return -inf
-#         mid, left_sum, right_sum, cur_sum = (L + R) // 2, 0, 0, 0
-#         for i in range(mid-1, L-1, -1):
-#             left_sum = max(left_sum, cur_sum := cur_sum + A[i])
-#         cur_sum = 0
-#         for i in range(mid+1, R+1):
-#             right_sum = max(right_sum, cur_sum := cur_sum + A[i])
-#         return max(max_arr(A, L, mid-1), max_arr(A, mid+1, R), left_sum + A[mid] + right_sum) # Что больше сумма слева от центра, справа от центра или в текущем разбиении?
-#     return max_arr(nums, 0, len(nums)-1)
+def maxSubArray(nums):
+    def solve(arr, l, r):
+        if l > r: return -10**10
+        m, left_s, right_s, cur_s = (l+r) // 2, 0, 0, 0
+        for i in range(m-1, l-1, -1):
+            left_s = max(left_s, cur_s := cur_s + arr[i])
+        cur_s = 0
+        for i in range(m+1, r+1):
+            right_s = max(right_s, cur_s := cur_s + arr[i])
+        return max(solve(arr, l, m-1), solve(arr, m+1, r), left_s+right_s+arr[m])
+    return solve(nums, 0, len(nums)-1)
+
 
 
 """We can further optimize the previous solution. 
